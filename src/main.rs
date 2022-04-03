@@ -14,6 +14,7 @@ use bevy::{
         render_resource::{Extent3d, PrimitiveTopology, Texture, TextureDimension, TextureFormat},
     },
     sprite::collide_aabb::{collide, Collision},
+    ui::widget::ImageMode,
 };
 use bevy_kira_audio::{Audio, AudioChannel, AudioPlugin};
 use bevy_tweening::TweeningPlugin;
@@ -177,17 +178,17 @@ impl TextSystem {
 
             let mut action = None;
             for (name, button) in buttons {
-                if name == "green"
-                    && (keyboard_input.just_pressed(KeyCode::Space)
-                        || keyboard_input.just_pressed(KeyCode::Y))
-                {
-                    trace!("green");
+                if name == "space" && keyboard_input.just_pressed(KeyCode::Space) {
+                    trace!("space");
                     action = Some(button.action.clone());
-                } else if name == "red" && keyboard_input.just_pressed(KeyCode::N) {
-                    trace!("red");
+                } else if name == "y" && keyboard_input.just_pressed(KeyCode::Y) {
+                    trace!("y");
                     action = Some(button.action.clone());
-                } else if name == "yellow" && keyboard_input.just_pressed(KeyCode::M) {
-                    trace!("yellow");
+                } else if name == "n" && keyboard_input.just_pressed(KeyCode::N) {
+                    trace!("n");
+                    action = Some(button.action.clone());
+                } else if name == "m" && keyboard_input.just_pressed(KeyCode::M) {
+                    trace!("m");
                     action = Some(button.action.clone());
                 }
             }
@@ -318,10 +319,11 @@ impl TextSystem {
                 .spawn_bundle(NodeBundle {
                     style: Style {
                         flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::Center,
                         margin,
                         size: Size {
-                            width: Val::Px(300.),
-                            height: Val::Px(30.),
+                            width: Val::Auto,
+                            height: Val::Px(64.),
                         },
                         ..Default::default()
                     },
@@ -330,23 +332,71 @@ impl TextSystem {
                 })
                 .insert(Name::new(format!("button:{}", color)))
                 .with_children(|parent| {
-                    parent.spawn_bundle(ImageBundle {
-                        image: UiImage(image),
-                        ..Default::default()
-                    });
-
-                    parent.spawn_bundle(TextBundle {
-                        text: Text::with_section(
-                            button.text.clone(),
-                            TextStyle {
-                                font: self.font.clone(),
-                                font_size: self.default_size,
-                                color: self.default_color,
+                    parent
+                        .spawn_bundle(NodeBundle {
+                            style: Style {
+                                // Align button image (child) to the right
+                                justify_content: JustifyContent::FlexEnd,
+                                flex_direction: FlexDirection::Row,
+                                align_items: AlignItems::Center,
+                                size: Size {
+                                    width: Val::Px(350.),
+                                    height: Val::Px(64.),
+                                },
+                                ..Default::default()
                             },
-                            text_align,
-                        ),
-                        ..Default::default()
-                    });
+                            color: UiColor(Color::NONE),
+                            ..Default::default()
+                        })
+                        .insert(Name::new("image"))
+                        .with_children(|parent| {
+                            parent.spawn_bundle(ImageBundle {
+                                image: UiImage(image),
+                                image_mode: ImageMode::KeepAspect,
+                                style: Style {
+                                    size: Size {
+                                        width: Val::Auto,
+                                        height: Val::Auto,
+                                    },
+                                    ..Default::default()
+                                },
+                                ..Default::default()
+                            });
+                        });
+
+                    parent
+                        .spawn_bundle(NodeBundle {
+                            style: Style {
+                                flex_direction: FlexDirection::Row,
+                                align_items: AlignItems::Center,
+                                margin: Rect {
+                                    left: Val::Px(20.),
+                                    ..Default::default()
+                                },
+                                size: Size {
+                                    width: Val::Px(300.),
+                                    height: Val::Px(64.),
+                                },
+                                ..Default::default()
+                            },
+                            color: UiColor(Color::NONE),
+                            ..Default::default()
+                        })
+                        .insert(Name::new("text"))
+                        .with_children(|parent| {
+                            parent.spawn_bundle(TextBundle {
+                                text: Text::with_section(
+                                    button.text.clone(),
+                                    TextStyle {
+                                        font: self.font.clone(),
+                                        font_size: self.default_size,
+                                        color: self.default_color,
+                                    },
+                                    text_align,
+                                ),
+                                ..Default::default()
+                            });
+                        });
                 })
                 .insert(Parent(root_node));
         }
@@ -519,9 +569,10 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let content = asset_server.load("text.json");
     let font = asset_server.load("fonts/mochiy_pop_one/MochiyPopOne-Regular.ttf");
     let mut buttons: HashMap<String, Handle<Image>> = HashMap::new();
-    buttons.insert("green".to_string(), asset_server.load("button_green.png"));
-    buttons.insert("yellow".to_string(), asset_server.load("button_yellow.png"));
-    buttons.insert("red".to_string(), asset_server.load("button_red.png"));
+    buttons.insert("space".to_string(), asset_server.load("key_space.png"));
+    buttons.insert("m".to_string(), asset_server.load("key_m.png"));
+    buttons.insert("n".to_string(), asset_server.load("key_n.png"));
+    buttons.insert("y".to_string(), asset_server.load("key_y.png"));
     commands
         .spawn()
         .insert(Name::new("TextSystem"))

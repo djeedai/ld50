@@ -1,7 +1,7 @@
 {
     "line_spacing": 20.0,
     "default_buttons": {
-        "green": {
+        "space": {
             "text": "Continue",
             "action": "NextPage"
         }
@@ -37,13 +37,13 @@
                 }
             ],
             "buttons": {
-                "green": {
+                "space": {
                     "text": "Continue",
                     "action": {
                         "JumpToPage": "end_short"
                     }
                 },
-                "yellow": {
+                "m": {
                     "text": "Tell me more",
                     "action": "NextPage"
                 }
