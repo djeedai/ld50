@@ -264,7 +264,7 @@ impl TextSystem {
         let book = self.book.as_ref().unwrap();
         let page = &book.pages[self.page_index];
 
-        let root_node = self.spawn_background(commands, page.background_color);
+        let root_node = self.spawn_background(commands, page.background_color, None);
         self.root_node = Some(root_node);
 
         let text_align = TextAlignment {
@@ -411,7 +411,7 @@ impl TextSystem {
             date: Utc::now(),
         });
 
-        let root_node = self.spawn_background(commands, None);
+        let root_node = self.spawn_background(commands, None, Some(JustifyContent::Center));
         self.root_node = Some(root_node);
 
         let now: DateTime<Utc> = Utc::now();
@@ -424,6 +424,16 @@ impl TextSystem {
         // Title
         commands
             .spawn_bundle(TextBundle {
+                // BUG - child order is random T_T
+                // without using Absolute, this randomly gets last at bottom of screen
+                style: Style {
+                    position_type: PositionType::Absolute,
+                    position: Rect {
+                        top: Val::Px(20.),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
                 text: Text::with_section(
                     "Score",
                     TextStyle {
@@ -533,7 +543,7 @@ impl TextSystem {
     /// Spawn a background node of the given color covering the entire screen, and set up to
     /// have children laid out in column from top to bottom, horizontally stretching the
     /// entire screen.
-    fn spawn_background(&self, commands: &mut Commands, color: Option<Color>) -> Entity {
+    fn spawn_background(&self, commands: &mut Commands, color: Option<Color>, justify_content: Option<JustifyContent>) -> Entity {
         commands
             .spawn_bundle(NodeBundle {
                 style: Style {
@@ -543,8 +553,7 @@ impl TextSystem {
                     // Lay out content items from top to bottom (reverse because Bevy)
                     flex_direction: FlexDirection::ColumnReverse,
                     // Align the entire content group vertically to the top
-                    //justify_content: JustifyContent::FlexStart,
-                    justify_content: JustifyContent::Center,
+                    justify_content: justify_content.unwrap_or(JustifyContent::FlexStart),
                     // Center child items horizontally
                     align_items: AlignItems::Center,
                     ..Default::default()
