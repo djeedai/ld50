@@ -5,7 +5,7 @@ use bevy::{
     asset::AssetServerSettings,
     core_pipeline::ClearColor,
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    ecs::schedule::ReportExecutionOrderAmbiguities,
+    ecs::{schedule::ReportExecutionOrderAmbiguities, system::EntityCommands},
     gltf::{Gltf, GltfMesh},
     prelude::*,
     render::{
@@ -266,142 +266,143 @@ impl TextSystem {
         let book = self.book.as_ref().unwrap();
         let page = &book.pages[self.page_index];
 
-        let root_node = self.spawn_background(commands, page.background_color, page.align);
-        self.root_node = Some(root_node);
+        let mut root = self.spawn_background(commands, page.background_color, page.align);
 
         let text_align = TextAlignment {
             horizontal: HorizontalAlign::Center,
             vertical: VerticalAlign::Center,
         };
 
-        // Spawn all lines
-        let margin = Val::Px(book.line_spacing);
-        let margin = Rect {
-            top: margin,
-            bottom: margin,
-            ..Default::default()
-        };
-        for (line_index, line) in page.lines.iter().enumerate() {
-            commands
-                .spawn_bundle(NodeBundle {
-                    style: Style {
-                        margin,
-                        ..Default::default()
-                    },
-                    color: UiColor(Color::NONE),
-                    ..Default::default()
-                })
-                .with_children(|parent| {
-                    parent.spawn_bundle(TextBundle {
-                        text: Text::with_section(
-                            line.text.clone(),
-                            TextStyle {
-                                font: self.font.clone(),
-                                font_size: line.size.unwrap_or(self.default_size),
-                                color: line.color.unwrap_or(self.default_color),
-                            },
-                            text_align,
-                        ),
-                        ..Default::default()
-                    });
-                })
-                .insert(Name::new(format!("Line{}", line_index)))
-                .insert(Parent(root_node));
-        }
-
-        // Spawn buttons
-        let buttons = page.buttons.as_ref().unwrap_or(&book.default_buttons);
-        for (color, button) in buttons {
-            let image = if let Some(image) = self.buttons.get(color) {
-                image.clone()
-            } else {
-                Handle::<Image>::default()
+        root.with_children(|parent| {
+            // Spawn all lines
+            let margin = Val::Px(book.line_spacing);
+            let margin = Rect {
+                top: margin,
+                bottom: margin,
+                ..Default::default()
             };
-            commands
-                .spawn_bundle(NodeBundle {
-                    style: Style {
-                        flex_direction: FlexDirection::Row,
-                        align_items: AlignItems::Center,
-                        margin,
-                        size: Size {
-                            width: Val::Auto,
-                            height: Val::Px(64.),
+            for (line_index, line) in page.lines.iter().enumerate() {
+                parent
+                    .spawn_bundle(NodeBundle {
+                        style: Style {
+                            margin,
+                            ..Default::default()
                         },
+                        color: UiColor(Color::NONE),
                         ..Default::default()
-                    },
-                    color: UiColor(Color::NONE),
-                    ..Default::default()
-                })
-                .insert(Name::new(format!("button:{}", color)))
-                .with_children(|parent| {
-                    parent
-                        .spawn_bundle(NodeBundle {
-                            style: Style {
-                                // Align button image (child) to the right
-                                justify_content: JustifyContent::FlexEnd,
-                                flex_direction: FlexDirection::Row,
-                                align_items: AlignItems::Center,
-                                size: Size {
-                                    width: Val::Px(350.),
-                                    height: Val::Px(64.),
+                    })
+                    .with_children(|parent| {
+                        parent.spawn_bundle(TextBundle {
+                            text: Text::with_section(
+                                line.text.clone(),
+                                TextStyle {
+                                    font: self.font.clone(),
+                                    font_size: line.size.unwrap_or(self.default_size),
+                                    color: line.color.unwrap_or(self.default_color),
                                 },
-                                ..Default::default()
-                            },
-                            color: UiColor(Color::NONE),
+                                text_align,
+                            ),
                             ..Default::default()
-                        })
-                        .insert(Name::new("image"))
-                        .with_children(|parent| {
-                            parent.spawn_bundle(ImageBundle {
-                                image: UiImage(image),
-                                image_mode: ImageMode::KeepAspect,
-                                style: Style {
-                                    size: Size {
-                                        width: Val::Auto,
-                                        height: Val::Auto,
-                                    },
-                                    ..Default::default()
-                                },
-                                ..Default::default()
-                            });
                         });
+                    })
+                    .insert(Name::new(format!("Line{}", line_index)));
+            }
 
-                    parent
-                        .spawn_bundle(NodeBundle {
-                            style: Style {
-                                flex_direction: FlexDirection::Row,
-                                align_items: AlignItems::Center,
-                                margin: Rect {
-                                    left: Val::Px(20.),
+            // Spawn buttons
+            let buttons = page.buttons.as_ref().unwrap_or(&book.default_buttons);
+            for (color, button) in buttons {
+                let image = if let Some(image) = self.buttons.get(color) {
+                    image.clone()
+                } else {
+                    Handle::<Image>::default()
+                };
+                parent
+                    .spawn_bundle(NodeBundle {
+                        style: Style {
+                            flex_direction: FlexDirection::Row,
+                            align_items: AlignItems::Center,
+                            margin,
+                            size: Size {
+                                width: Val::Auto,
+                                height: Val::Px(64.),
+                            },
+                            ..Default::default()
+                        },
+                        color: UiColor(Color::NONE),
+                        ..Default::default()
+                    })
+                    .insert(Name::new(format!("button:{}", color)))
+                    .with_children(|parent| {
+                        parent
+                            .spawn_bundle(NodeBundle {
+                                style: Style {
+                                    // Align button image (child) to the right
+                                    justify_content: JustifyContent::FlexEnd,
+                                    flex_direction: FlexDirection::Row,
+                                    align_items: AlignItems::Center,
+                                    size: Size {
+                                        width: Val::Px(350.),
+                                        height: Val::Px(64.),
+                                    },
                                     ..Default::default()
                                 },
-                                size: Size {
-                                    width: Val::Px(300.),
-                                    height: Val::Px(64.),
-                                },
+                                color: UiColor(Color::NONE),
                                 ..Default::default()
-                            },
-                            color: UiColor(Color::NONE),
-                            ..Default::default()
-                        })
-                        .insert(Name::new("text"))
-                        .with_children(|parent| {
-                            parent.spawn_bundle(TextBundle {
-                                text: Text::with_section(
-                                    button.text.clone(),
-                                    TextStyle {
-                                        font: self.font.clone(),
-                                        font_size: self.default_size,
-                                        color: self.default_color,
+                            })
+                            .insert(Name::new("image"))
+                            .with_children(|parent| {
+                                parent.spawn_bundle(ImageBundle {
+                                    image: UiImage(image),
+                                    image_mode: ImageMode::KeepAspect,
+                                    style: Style {
+                                        size: Size {
+                                            width: Val::Auto,
+                                            height: Val::Auto,
+                                        },
+                                        ..Default::default()
                                     },
-                                    text_align,
-                                ),
-                                ..Default::default()
+                                    ..Default::default()
+                                });
                             });
-                        });
-                })
-                .insert(Parent(root_node));
-        }
+
+                        parent
+                            .spawn_bundle(NodeBundle {
+                                style: Style {
+                                    flex_direction: FlexDirection::Row,
+                                    align_items: AlignItems::Center,
+                                    margin: Rect {
+                                        left: Val::Px(20.),
+                                        ..Default::default()
+                                    },
+                                    size: Size {
+                                        width: Val::Px(300.),
+                                        height: Val::Px(64.),
+                                    },
+                                    ..Default::default()
+                                },
+                                color: UiColor(Color::NONE),
+                                ..Default::default()
+                            })
+                            .insert(Name::new("text"))
+                            .with_children(|parent| {
+                                parent.spawn_bundle(TextBundle {
+                                    text: Text::with_section(
+                                        button.text.clone(),
+                                        TextStyle {
+                                            font: self.font.clone(),
+                                            font_size: self.default_size,
+                                            color: self.default_color,
+                                        },
+                                        text_align,
+                                    ),
+                                    ..Default::default()
+                                });
+                            });
+                    });
+            }
+        });
+
+        self.root_node = Some(root.id());
     }
 
     /// Spawn the leaderboard at the end of the game.
@@ -413,8 +414,7 @@ impl TextSystem {
             date: Utc::now(),
         });
 
-        let root_node = self.spawn_background(commands, None, Some(JustifyContent::Center));
-        self.root_node = Some(root_node);
+        let mut root = self.spawn_background(commands, None, Some(JustifyContent::Center));
 
         let now: DateTime<Utc> = Utc::now();
 
@@ -423,149 +423,146 @@ impl TextSystem {
             vertical: VerticalAlign::Center,
         };
 
-        // Title
-        commands
-            .spawn_bundle(TextBundle {
-                // BUG - child order is random T_T
-                // without using Absolute, this randomly gets last at bottom of screen
-                style: Style {
-                    position_type: PositionType::Absolute,
-                    position: Rect {
-                        top: Val::Px(20.),
-                        ..Default::default()
-                    },
+        root.with_children(|parent| {
+            // Title
+            parent
+                .spawn_bundle(TextBundle {
+                    text: Text::with_section(
+                        "Score",
+                        TextStyle {
+                            font: self.font.clone(),
+                            font_size: 60.,
+                            color: self.default_color,
+                        },
+                        text_align,
+                    ),
                     ..Default::default()
-                },
-                text: Text::with_section(
-                    "Score",
-                    TextStyle {
-                        font: self.font.clone(),
-                        font_size: 60.,
-                        color: self.default_color,
-                    },
-                    text_align,
-                ),
+                })
+                .insert(Name::new("Score"));
+
+            // Score lines
+            let margin = Val::Px(10.);
+            let margin = Rect {
+                top: margin,
+                bottom: margin,
                 ..Default::default()
-            })
-            .insert(Name::new("Score"))
-            .insert(Parent(root_node));
-
-        // Score lines
-        let margin = Val::Px(10.);
-        let margin = Rect {
-            top: margin,
-            bottom: margin,
-            ..Default::default()
-        };
-        for score in &self.scores {
-            commands
-                .spawn_bundle(NodeBundle {
-                    style: Style {
-                        margin,
-                        ..Default::default()
-                    },
-                    color: UiColor(Color::NONE),
-                    ..Default::default()
-                })
-                .insert(Name::new(format!("{:?}", score.date)))
-                .with_children(|parent| {
-                    parent
-                        .spawn_bundle(NodeBundle {
-                            style: Style {
-                                flex_direction: FlexDirection::Row,
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                ..Default::default()
-                            },
-                            color: UiColor(Color::NONE),
+            };
+            for score in &self.scores {
+                parent
+                    .spawn_bundle(NodeBundle {
+                        style: Style {
+                            margin,
                             ..Default::default()
-                        })
-                        .with_children(|parent| {
-                            parent
-                                .spawn_bundle(NodeBundle {
-                                    style: Style {
-                                        justify_content: JustifyContent::FlexStart,
-                                        size: Size {
-                                            width: Val::Px(400.),
-                                            height: Val::Px(30.),
-                                        },
-                                        ..Default::default()
-                                    },
-                                    color: UiColor(Color::NONE),
+                        },
+                        color: UiColor(Color::NONE),
+                        ..Default::default()
+                    })
+                    .insert(Name::new(format!("{:?}", score.date)))
+                    .with_children(|parent| {
+                        parent
+                            .spawn_bundle(NodeBundle {
+                                style: Style {
+                                    flex_direction: FlexDirection::Row,
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
                                     ..Default::default()
-                                })
-                                .with_children(|parent| {
-                                    parent.spawn_bundle(TextBundle {
-                                        text: Text::with_section(
-                                            score.date.format("%Y-%m-%d %H:%M:%S").to_string(),
-                                            TextStyle {
-                                                font: self.font.clone(),
-                                                font_size: self.default_size,
-                                                color: self.default_color,
+                                },
+                                color: UiColor(Color::NONE),
+                                ..Default::default()
+                            })
+                            .with_children(|parent| {
+                                parent
+                                    .spawn_bundle(NodeBundle {
+                                        style: Style {
+                                            justify_content: JustifyContent::FlexStart,
+                                            size: Size {
+                                                width: Val::Px(400.),
+                                                height: Val::Px(30.),
                                             },
-                                            text_align,
-                                        ),
+                                            ..Default::default()
+                                        },
+                                        color: UiColor(Color::NONE),
                                         ..Default::default()
+                                    })
+                                    .with_children(|parent| {
+                                        parent.spawn_bundle(TextBundle {
+                                            text: Text::with_section(
+                                                score.date.format("%Y-%m-%d %H:%M:%S").to_string(),
+                                                TextStyle {
+                                                    font: self.font.clone(),
+                                                    font_size: self.default_size,
+                                                    color: self.default_color,
+                                                },
+                                                text_align,
+                                            ),
+                                            ..Default::default()
+                                        });
                                     });
-                                });
 
-                            parent
-                                .spawn_bundle(NodeBundle {
-                                    style: Style {
-                                        justify_content: JustifyContent::FlexEnd,
-                                        size: Size {
-                                            width: Val::Px(200.),
-                                            height: Val::Px(30.),
-                                        },
-                                        ..Default::default()
-                                    },
-                                    color: UiColor(Color::NONE),
-                                    ..Default::default()
-                                })
-                                .with_children(|parent| {
-                                    parent.spawn_bundle(TextBundle {
-                                        text: Text::with_section(
-                                            format!("{} pages read", score.page_read),
-                                            TextStyle {
-                                                font: self.font.clone(),
-                                                font_size: self.default_size,
-                                                color: self.default_color,
+                                parent
+                                    .spawn_bundle(NodeBundle {
+                                        style: Style {
+                                            justify_content: JustifyContent::FlexEnd,
+                                            size: Size {
+                                                width: Val::Px(200.),
+                                                height: Val::Px(30.),
                                             },
-                                            text_align,
-                                        ),
+                                            ..Default::default()
+                                        },
+                                        color: UiColor(Color::NONE),
                                         ..Default::default()
+                                    })
+                                    .with_children(|parent| {
+                                        parent.spawn_bundle(TextBundle {
+                                            text: Text::with_section(
+                                                format!("{} pages read", score.page_read),
+                                                TextStyle {
+                                                    font: self.font.clone(),
+                                                    font_size: self.default_size,
+                                                    color: self.default_color,
+                                                },
+                                                text_align,
+                                            ),
+                                            ..Default::default()
+                                        });
                                     });
-                                });
-                        });
-                })
-                .insert(Parent(root_node));
-        }
+                            });
+                    });
+            }
+        });
+
+        self.root_node = Some(root.id());
     }
 
     /// Spawn a background node of the given color covering the entire screen, and set up to
     /// have children laid out in column from top to bottom, horizontally stretching the
     /// entire screen.
-    fn spawn_background(&self, commands: &mut Commands, color: Option<Color>, justify_content: Option<JustifyContent>) -> Entity {
-        commands
-            .spawn_bundle(NodeBundle {
-                style: Style {
-                    position_type: PositionType::Absolute,
-                    // Cover entire screen
-                    position: Rect::all(Val::Px(0.0)),
-                    // Lay out content items from top to bottom (reverse because Bevy)
-                    flex_direction: FlexDirection::ColumnReverse,
-                    // Align the entire content group vertically to the top
-                    justify_content: justify_content.unwrap_or(JustifyContent::FlexStart),
-                    // Center child items horizontally
-                    align_items: AlignItems::Center,
-                    ..Default::default()
-                },
-                color: UiColor(color.unwrap_or(self.default_background_color)),
+    fn spawn_background<'w, 's, 'a>(
+        &'a self,
+        commands: &'a mut Commands<'w, 's>,
+        color: Option<Color>,
+        justify_content: Option<JustifyContent>,
+    ) -> EntityCommands<'w, 's, 'a> {
+        let mut entity_commands = commands.spawn_bundle(NodeBundle {
+            style: Style {
+                position_type: PositionType::Absolute,
+                // Cover entire screen
+                position: Rect::all(Val::Px(0.0)),
+                // Lay out content items from top to bottom (reverse because Bevy)
+                flex_direction: FlexDirection::ColumnReverse,
+                // Align the entire content group vertically to the top
+                justify_content: justify_content.unwrap_or(JustifyContent::FlexStart),
+                // Center child items horizontally
+                align_items: AlignItems::Center,
                 ..Default::default()
-            })
+            },
+            color: UiColor(color.unwrap_or(self.default_background_color)),
+            ..Default::default()
+        });
+        entity_commands
             .insert(Name::new("Background"))
-            .insert(Background)
-            .id()
+            .insert(Background);
+        entity_commands
     }
 }
 
