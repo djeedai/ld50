@@ -1,0 +1,90 @@
+{
+    "line_spacing": 20.0,
+    "default_buttons": {
+        "green": {
+            "text": "Continue",
+            "action": "NextPage"
+        }
+    },
+    "pages": [
+        {
+            "lines": [
+                {
+                    "text": "Ludum Dare 50"
+                },
+                {
+                    "text": "A short word...",
+                    "size": 100.0
+                }
+            ],
+            "background_color": {
+                "Rgba": {
+                    "red": 0.3,
+                    "green": 0.3,
+                    "blue": 0.1,
+                    "alpha": 1.0
+                }
+            }
+        },
+        {
+            "lines": [
+                {
+                    "text": "Short on time",
+                    "size": 50.0
+                },
+                {
+                    "text": "I wanted to write a short word to all the Ludum Dare participants.\nI was really looking forward to participate and celebrate the 20th anniversary of this amazing event.\nUnfortunately due to personal circumstances, I have no time to make a game this week-end.\nI wish all of you to have fun and learn!"
+                }
+            ],
+            "buttons": {
+                "green": {
+                    "text": "Continue",
+                    "action": {
+                        "JumpToPage": "end_short"
+                    }
+                },
+                "yellow": {
+                    "text": "Tell me more",
+                    "action": "NextPage"
+                }
+            }
+        },
+        {
+            "lines": [
+                {
+                    "text": "Short on time",
+                    "size": 50.0
+                },
+                {
+                    "text": "As it turns out, I have some family coming over this week-end. So the timing with the Jam was not great."
+                }
+            ]
+        },
+        {
+            "name": "end",
+            "is_final": true,
+            "lines": [
+                {
+                    "text": "Inevitably...",
+                    "size": 50.0
+                },
+                {
+                    "text": "...this story has come to an end."
+                }
+            ]
+        },
+        {
+            "name": "end_short",
+            "is_final": true,
+            "lines": [
+                {
+                    "text": "That was short!",
+                    "size": 50.0
+                },
+                {
+                    "text": "You don't seem very interested by what I say.\nHave a nice day."
+                }
+            ]
+        }
+    ]
+}
