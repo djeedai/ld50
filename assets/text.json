@@ -24,7 +24,8 @@
                     "blue": 0.1,
                     "alpha": 1.0
                 }
-            }
+            },
+            "align": "Center"
         },
         {
             "lines": [

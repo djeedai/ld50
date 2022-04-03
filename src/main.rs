@@ -71,6 +71,8 @@ struct Page {
     buttons: Option<HashMap<String, Button>>,
     /// Page background color.
     background_color: Option<Color>,
+    /// Align of page content.
+    align: Option<JustifyContent>,
 }
 
 #[derive(Deserialize)]
@@ -264,7 +266,7 @@ impl TextSystem {
         let book = self.book.as_ref().unwrap();
         let page = &book.pages[self.page_index];
 
-        let root_node = self.spawn_background(commands, page.background_color, None);
+        let root_node = self.spawn_background(commands, page.background_color, page.align);
         self.root_node = Some(root_node);
 
         let text_align = TextAlignment {
