@@ -328,14 +328,53 @@ impl TextSystem {
                 } else {
                     Handle::<Image>::default()
                 };
+                self.spawn_button(parent, book.line_spacing, &button.text, image);
+            }
+        });
+
+        self.root_node = Some(root.id());
+    }
+
+    fn spawn_button(
+        &self,
+        parent: &mut ChildBuilder,
+        line_spacing: f32,
+        text: &str,
+        image: Handle<Image>,
+    ) {
+        let margin = Val::Px(line_spacing);
+        let margin = Rect {
+            top: margin,
+            bottom: margin,
+            ..Default::default()
+        };
+
+        parent
+            .spawn_bundle(NodeBundle {
+                style: Style {
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    margin,
+                    size: Size {
+                        width: Val::Auto,
+                        height: Val::Px(64.),
+                    },
+                    ..Default::default()
+                },
+                color: UiColor(Color::NONE),
+                ..Default::default()
+            })
+            .insert(Name::new(format!("button:{}", text)))
+            .with_children(|parent| {
                 parent
                     .spawn_bundle(NodeBundle {
                         style: Style {
+                            // Align button image (child) to the right
+                            justify_content: JustifyContent::FlexEnd,
                             flex_direction: FlexDirection::Row,
                             align_items: AlignItems::Center,
-                            margin,
                             size: Size {
-                                width: Val::Auto,
+                                width: Val::Px(350.),
                                 height: Val::Px(64.),
                             },
                             ..Default::default()
@@ -343,78 +382,59 @@ impl TextSystem {
                         color: UiColor(Color::NONE),
                         ..Default::default()
                     })
-                    .insert(Name::new(format!("button:{}", color)))
+                    .insert(Name::new("image"))
                     .with_children(|parent| {
-                        parent
-                            .spawn_bundle(NodeBundle {
-                                style: Style {
-                                    // Align button image (child) to the right
-                                    justify_content: JustifyContent::FlexEnd,
-                                    flex_direction: FlexDirection::Row,
-                                    align_items: AlignItems::Center,
-                                    size: Size {
-                                        width: Val::Px(350.),
-                                        height: Val::Px(64.),
-                                    },
-                                    ..Default::default()
+                        parent.spawn_bundle(ImageBundle {
+                            image: UiImage(image),
+                            image_mode: ImageMode::KeepAspect,
+                            style: Style {
+                                size: Size {
+                                    width: Val::Auto,
+                                    height: Val::Auto,
                                 },
-                                color: UiColor(Color::NONE),
                                 ..Default::default()
-                            })
-                            .insert(Name::new("image"))
-                            .with_children(|parent| {
-                                parent.spawn_bundle(ImageBundle {
-                                    image: UiImage(image),
-                                    image_mode: ImageMode::KeepAspect,
-                                    style: Style {
-                                        size: Size {
-                                            width: Val::Auto,
-                                            height: Val::Auto,
-                                        },
-                                        ..Default::default()
-                                    },
-                                    ..Default::default()
-                                });
-                            });
-
-                        parent
-                            .spawn_bundle(NodeBundle {
-                                style: Style {
-                                    flex_direction: FlexDirection::Row,
-                                    align_items: AlignItems::Center,
-                                    margin: Rect {
-                                        left: Val::Px(20.),
-                                        ..Default::default()
-                                    },
-                                    size: Size {
-                                        width: Val::Px(300.),
-                                        height: Val::Px(64.),
-                                    },
-                                    ..Default::default()
-                                },
-                                color: UiColor(Color::NONE),
-                                ..Default::default()
-                            })
-                            .insert(Name::new("text"))
-                            .with_children(|parent| {
-                                parent.spawn_bundle(TextBundle {
-                                    text: Text::with_section(
-                                        button.text.clone(),
-                                        TextStyle {
-                                            font: self.font.clone(),
-                                            font_size: self.default_size,
-                                            color: self.default_color,
-                                        },
-                                        text_align,
-                                    ),
-                                    ..Default::default()
-                                });
-                            });
+                            },
+                            ..Default::default()
+                        });
                     });
-            }
-        });
 
-        self.root_node = Some(root.id());
+                parent
+                    .spawn_bundle(NodeBundle {
+                        style: Style {
+                            flex_direction: FlexDirection::Row,
+                            align_items: AlignItems::Center,
+                            margin: Rect {
+                                left: Val::Px(20.),
+                                ..Default::default()
+                            },
+                            size: Size {
+                                width: Val::Px(300.),
+                                height: Val::Px(64.),
+                            },
+                            ..Default::default()
+                        },
+                        color: UiColor(Color::NONE),
+                        ..Default::default()
+                    })
+                    .insert(Name::new("text"))
+                    .with_children(|parent| {
+                        parent.spawn_bundle(TextBundle {
+                            text: Text::with_section(
+                                text,
+                                TextStyle {
+                                    font: self.font.clone(),
+                                    font_size: self.default_size,
+                                    color: self.default_color,
+                                },
+                                TextAlignment {
+                                    horizontal: HorizontalAlign::Center,
+                                    vertical: VerticalAlign::Center,
+                                },
+                            ),
+                            ..Default::default()
+                        });
+                    });
+            });
     }
 
     /// Spawn the leaderboard at the end of the game.
@@ -559,6 +579,14 @@ impl TextSystem {
                             });
                     });
             }
+
+            // Restart button
+            self.spawn_button(
+                parent,
+                30.,
+                "Restart",
+                self.buttons.get("space").unwrap().clone(),
+            );
         });
 
         self.root_node = Some(root.id());
