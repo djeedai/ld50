@@ -93,7 +93,7 @@
                     "size": 50.0
                 },
                 {
-                    "text": "Actually, that's kind of personal...\nAnyway, where was I?"
+                    "text": "Actually, that's kind of personal...\nAnyway, where were we?"
                 }
             ],
             "buttons": {
@@ -127,6 +127,70 @@
                 {
                     "text": "So the LDJam. Pretty cool, right?"
                 }
+            ]
+        },
+        {
+            "name": "jam2",
+            "lines": [
+                {
+                    "text": "Jam",
+                    "size": 50.0
+                },
+                {
+                    "text": "I've actually participated before.\nGuess how many times?"
+                }
+            ],
+            "buttons": {
+                "1": {
+                    "text": "1",
+                    "action": {
+                        "JumpToPage": "jam3_wrong"
+                    }
+                },
+                "2": {
+                    "text": "2",
+                    "action": {
+                        "JumpToPage": "jam3_right"
+                    }
+                },
+                "3": {
+                    "text": "3",
+                    "action": {
+                        "JumpToPage": "jam3_wrong"
+                    }
+                }
+            }
+        },
+        {
+            "name": "jam3_right",
+            "lines": [
+                {
+                    "text": "Jam",
+                    "size": 50.0
+                },
+                {
+                    "text": "Correct!\n...\nDid I already mentioned that to you?"
+                }
+            ],
+            "buttons": {
+                "space": {
+                    "text": "Continue",
+                    "action": {
+                        "JumpToPage": "jam4"
+                    }
+                }
+            }
+        },
+        {
+            "name": "jam4",
+            "lines": [
+                {
+                    "text": "Jam",
+                    "size": 50.0
+                },
+                {
+                    "text": "Well, in any case, I hope you have a wonderful Ludum Dare #50!"
+                }
             ],
             "buttons": {
                 "space": {
@@ -136,6 +200,18 @@
                     }
                 }
             }
+        },
+        {
+            "name": "jam3_wrong",
+            "lines": [
+                {
+                    "text": "Jam",
+                    "size": 50.0
+                },
+                {
+                    "text": "Nope.\nYou don't seem very interested, are you?"
+                }
+            ]
         },
         {
             "name": "end",

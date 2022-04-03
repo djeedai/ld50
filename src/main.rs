@@ -204,6 +204,15 @@ impl TextSystem {
                 } else if name == "m" && keyboard_input.just_pressed(KeyCode::M) {
                     trace!("m");
                     action = Some(button.action.clone());
+                } else if name == "1" && keyboard_input.just_pressed(KeyCode::Key1) {
+                    trace!("1");
+                    action = Some(button.action.clone());
+                } else if name == "2" && keyboard_input.just_pressed(KeyCode::Key2) {
+                    trace!("2");
+                    action = Some(button.action.clone());
+                } else if name == "3" && keyboard_input.just_pressed(KeyCode::Key3) {
+                    trace!("3");
+                    action = Some(button.action.clone());
                 }
             }
 
@@ -639,6 +648,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     buttons.insert("m".to_string(), asset_server.load("key_m.png"));
     buttons.insert("n".to_string(), asset_server.load("key_n.png"));
     buttons.insert("y".to_string(), asset_server.load("key_y.png"));
+    buttons.insert("1".to_string(), asset_server.load("key_1.png"));
+    buttons.insert("2".to_string(), asset_server.load("key_2.png"));
+    buttons.insert("3".to_string(), asset_server.load("key_3.png"));
     commands
         .spawn()
         .insert(Name::new("TextSystem"))
