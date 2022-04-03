@@ -18,6 +18,7 @@ use bevy::{
 use bevy_kira_audio::{Audio, AudioChannel, AudioPlugin};
 use bevy_tweening::TweeningPlugin;
 //use bevy_prototype_debug_lines::{DebugLines, DebugLinesPlugin};
+use chrono::prelude::*;
 use serde::Deserialize;
 use std::{collections::HashMap, f32::consts::*, fs::File, io::Read};
 
@@ -92,6 +93,11 @@ impl Default for Book {
 #[derive(Component, Default)]
 struct Background;
 
+struct Score {
+    date: DateTime<Utc>,
+    page_read: u32,
+}
+
 #[derive(Component)]
 struct TextSystem {
     book: Option<Book>,
@@ -103,6 +109,8 @@ struct TextSystem {
     root_node: Option<Entity>,
     page_index: usize,
     buttons: HashMap<String, Handle<Image>>,
+    page_read: u32,
+    scores: Vec<Score>,
 }
 
 impl Default for TextSystem {
@@ -117,6 +125,8 @@ impl Default for TextSystem {
             root_node: None,
             page_index: 0,
             buttons: HashMap::default(),
+            page_read: 0,
+            scores: vec![],
         }
     }
 }
@@ -186,6 +196,8 @@ impl TextSystem {
                 if page.is_final {
                     action = ButtonAction::JumpToEnd;
                 }
+
+                self.page_read += 1;
 
                 match action {
                     ButtonAction::NextPage => self.move_next(commands),
@@ -342,8 +354,15 @@ impl TextSystem {
     fn spawn_leaderboard(&mut self, commands: &mut Commands) {
         self.clear(commands);
 
+        self.scores.push(Score {
+            page_read: self.page_read,
+            date: Utc::now(),
+        });
+
         let root_node = self.spawn_background(commands, None);
         self.root_node = Some(root_node);
+
+        let now: DateTime<Utc> = Utc::now();
 
         let text_align = TextAlignment {
             horizontal: HorizontalAlign::Center,
@@ -351,18 +370,21 @@ impl TextSystem {
         };
 
         // Title
-        commands.spawn_bundle(TextBundle {
-            text: Text::with_section(
-                "Score",
-                TextStyle {
-                    font: self.font.clone(),
-                    font_size: self.default_size,
-                    color: self.default_color,
-                },
-                text_align,
-            ),
-            ..Default::default()
-        });
+        commands
+            .spawn_bundle(TextBundle {
+                text: Text::with_section(
+                    "Score",
+                    TextStyle {
+                        font: self.font.clone(),
+                        font_size: 60.,
+                        color: self.default_color,
+                    },
+                    text_align,
+                ),
+                ..Default::default()
+            })
+            .insert(Name::new("Score"))
+            .insert(Parent(root_node));
 
         // Score lines
         let margin = Val::Px(10.);
@@ -371,8 +393,7 @@ impl TextSystem {
             bottom: margin,
             ..Default::default()
         };
-        for score in 3..7 {
-            // TODO
+        for score in &self.scores {
             commands
                 .spawn_bundle(NodeBundle {
                     style: Style {
@@ -382,19 +403,76 @@ impl TextSystem {
                     color: UiColor(Color::NONE),
                     ..Default::default()
                 })
+                .insert(Name::new(format!("{:?}", score.date)))
                 .with_children(|parent| {
-                    parent.spawn_bundle(TextBundle {
-                        text: Text::with_section(
-                            format!("{} pages read", score),
-                            TextStyle {
-                                font: self.font.clone(),
-                                font_size: self.default_size,
-                                color: self.default_color,
+                    parent
+                        .spawn_bundle(NodeBundle {
+                            style: Style {
+                                flex_direction: FlexDirection::Row,
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                ..Default::default()
                             },
-                            text_align,
-                        ),
-                        ..Default::default()
-                    });
+                            color: UiColor(Color::NONE),
+                            ..Default::default()
+                        })
+                        .with_children(|parent| {
+                            parent
+                                .spawn_bundle(NodeBundle {
+                                    style: Style {
+                                        justify_content: JustifyContent::FlexStart,
+                                        size: Size {
+                                            width: Val::Px(400.),
+                                            height: Val::Px(30.),
+                                        },
+                                        ..Default::default()
+                                    },
+                                    color: UiColor(Color::NONE),
+                                    ..Default::default()
+                                })
+                                .with_children(|parent| {
+                                    parent.spawn_bundle(TextBundle {
+                                        text: Text::with_section(
+                                            score.date.format("%Y-%m-%d %H:%M:%S").to_string(),
+                                            TextStyle {
+                                                font: self.font.clone(),
+                                                font_size: self.default_size,
+                                                color: self.default_color,
+                                            },
+                                            text_align,
+                                        ),
+                                        ..Default::default()
+                                    });
+                                });
+
+                            parent
+                                .spawn_bundle(NodeBundle {
+                                    style: Style {
+                                        justify_content: JustifyContent::FlexEnd,
+                                        size: Size {
+                                            width: Val::Px(200.),
+                                            height: Val::Px(30.),
+                                        },
+                                        ..Default::default()
+                                    },
+                                    color: UiColor(Color::NONE),
+                                    ..Default::default()
+                                })
+                                .with_children(|parent| {
+                                    parent.spawn_bundle(TextBundle {
+                                        text: Text::with_section(
+                                            format!("{} pages read", score.page_read),
+                                            TextStyle {
+                                                font: self.font.clone(),
+                                                font_size: self.default_size,
+                                                color: self.default_color,
+                                            },
+                                            text_align,
+                                        ),
+                                        ..Default::default()
+                                    });
+                                });
+                        });
                 })
                 .insert(Parent(root_node));
         }
@@ -444,90 +522,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn()
         .insert(TextSystem::new(content, font, buttons));
-
-    // commands
-    //     .spawn_bundle(NodeBundle {
-    //         style: Style {
-    //             position_type: PositionType::Absolute,
-    //             // Cover entire screen
-    //             position: Rect::all(Val::Px(0.0)),
-    //             // Lay out content items from top to bottom (reverse because Bevy)
-    //             flex_direction: FlexDirection::ColumnReverse,
-    //             // Align the entire content group vertically to the top
-    //             //justify_content: JustifyContent::FlexStart,
-    //             justify_content: JustifyContent::Center,
-    //             // Center child items horizontally
-    //             align_items: AlignItems::Center,
-    //             ..Default::default()
-    //         },
-    //         color: UiColor(Color::rgb(0.1, 0.1, 0.2)),
-    //         ..Default::default()
-    //     })
-    //     .with_children(|parent| {
-    //         // parent.spawn_bundle(NodeBundle {
-    //         //     style: Style {
-    //         //         size: Size::new(Val::Px(200.), Val::Px(30.)),
-    //         //         ..Default::default()
-    //         //     },
-    //         //     color: UiColor(Color::rgb(0.6, 0.3, 0.4)),
-    //         //     ..Default::default()
-    //         // });
-
-    //         parent.spawn_bundle(TextBundle {
-    //             text: Text::with_section(
-    //                 "Ludum Dare 50",
-    //                 TextStyle {
-    //                     font: font.clone(),
-    //                     font_size: 30.0,
-    //                     color: Color::rgb(0.8, 0.8, 0.8),
-    //                 },
-    //                 text_align,
-    //             ),
-    //             ..Default::default()
-    //         });
-
-    //         parent
-    //             .spawn_bundle(NodeBundle {
-    //                 style: Style {
-    //                     //size: Size::new(Val::Px(300.), Val::Px(80.)),
-    //                     margin: Rect {
-    //                         top: Val::Px(80.),
-    //                         bottom: Val::Px(80.),
-    //                         ..Default::default()
-    //                     },
-    //                     ..Default::default()
-    //                 },
-    //                 color: UiColor(Color::NONE),
-    //                 ..Default::default()
-    //             })
-    //             .with_children(|parent| {
-    //                 parent.spawn_bundle(TextBundle {
-    //                     text: Text::with_section(
-    //                         "A short word...",
-    //                         TextStyle {
-    //                             font: font.clone(),
-    //                             font_size: 150.0,
-    //                             color: Color::rgb(0.8, 0.8, 0.8),
-    //                         },
-    //                         text_align,
-    //                     ),
-    //                     ..Default::default()
-    //                 });
-    //             });
-
-    //         parent.spawn_bundle(TextBundle {
-    //             text: Text::with_section(
-    //                 "OK",
-    //                 TextStyle {
-    //                     font: font.clone(),
-    //                     font_size: 30.0,
-    //                     color: Color::rgb(0.8, 0.8, 0.8),
-    //                 },
-    //                 text_align,
-    //             ),
-    //             ..Default::default()
-    //         });
-    //     });
 }
 
 fn update(
