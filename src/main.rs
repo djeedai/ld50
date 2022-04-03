@@ -96,6 +96,7 @@ impl Default for Book {
 #[derive(Component, Default)]
 struct Background;
 
+#[derive(Copy, Clone, Debug)]
 struct Score {
     date: DateTime<Utc>,
     page_read: u32,
@@ -114,6 +115,7 @@ struct TextSystem {
     buttons: HashMap<String, Handle<Image>>,
     page_read: u32,
     scores: Vec<Score>,
+    is_scoreboard: bool,
 }
 
 impl Default for TextSystem {
@@ -130,6 +132,7 @@ impl Default for TextSystem {
             buttons: HashMap::default(),
             page_read: 0,
             scores: vec![],
+            is_scoreboard: false,
         }
     }
 }
@@ -171,7 +174,16 @@ impl TextSystem {
         };
 
         // Handle inputs
-        if let Some(page) = self.current_page() {
+        if self.is_scoreboard {
+            if keyboard_input.just_pressed(KeyCode::Space) {
+                trace!("space");
+                self.clear(commands);
+                self.page_index = 0;
+                self.is_scoreboard = false;
+                self.page_read = 0;
+                self.setup_page(commands);
+            }
+        } else if let Some(page) = self.current_page() {
             let buttons = if let Some(buttons) = &page.buttons {
                 buttons
             } else {
@@ -409,12 +421,22 @@ impl TextSystem {
     fn spawn_leaderboard(&mut self, commands: &mut Commands) {
         self.clear(commands);
 
+        // Insert new score, retaining only the 10 last ones.
+        while self.scores.len() >= 10 {
+            self.scores.remove(0);
+        }
         self.scores.push(Score {
             page_read: self.page_read,
             date: Utc::now(),
         });
 
-        let mut root = self.spawn_background(commands, None, Some(JustifyContent::Center));
+        // Sort score records by actual score value (pages read)
+        let mut sorted_scores = self.scores.clone();
+        sorted_scores.sort_by(|a, b| b.page_read.partial_cmp(&a.page_read).unwrap());
+
+        self.is_scoreboard = true;
+
+        let mut root = self.spawn_background(commands, None, Some(JustifyContent::FlexStart));
 
         let now: DateTime<Utc> = Utc::now();
 
@@ -427,6 +449,14 @@ impl TextSystem {
             // Title
             parent
                 .spawn_bundle(TextBundle {
+                    style: Style {
+                        margin: Rect {
+                            top: Val::Px(30.),
+                            bottom: Val::Px(30.),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
                     text: Text::with_section(
                         "Score",
                         TextStyle {
@@ -447,7 +477,7 @@ impl TextSystem {
                 bottom: margin,
                 ..Default::default()
             };
-            for score in &self.scores {
+            for score in &sorted_scores {
                 parent
                     .spawn_bundle(NodeBundle {
                         style: Style {
