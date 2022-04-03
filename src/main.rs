@@ -278,7 +278,7 @@ impl TextSystem {
             bottom: margin,
             ..Default::default()
         };
-        for line in &page.lines {
+        for (line_index, line) in page.lines.iter().enumerate() {
             commands
                 .spawn_bundle(NodeBundle {
                     style: Style {
@@ -302,6 +302,7 @@ impl TextSystem {
                         ..Default::default()
                     });
                 })
+                .insert(Name::new(format!("Line{}", line_index)))
                 .insert(Parent(root_node));
         }
 
@@ -327,6 +328,7 @@ impl TextSystem {
                     color: UiColor(Color::NONE),
                     ..Default::default()
                 })
+                .insert(Name::new(format!("button:{}", color)))
                 .with_children(|parent| {
                     parent.spawn_bundle(ImageBundle {
                         image: UiImage(image),
@@ -500,6 +502,7 @@ impl TextSystem {
                 color: UiColor(color.unwrap_or(self.default_background_color)),
                 ..Default::default()
             })
+            .insert(Name::new("Background"))
             .insert(Background)
             .id()
     }
@@ -521,6 +524,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     buttons.insert("red".to_string(), asset_server.load("button_red.png"));
     commands
         .spawn()
+        .insert(Name::new("TextSystem"))
         .insert(TextSystem::new(content, font, buttons));
 }
 
