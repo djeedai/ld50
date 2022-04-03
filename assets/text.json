@@ -57,9 +57,85 @@
                     "size": 50.0
                 },
                 {
-                    "text": "As it turns out, I have some family coming over this week-end. So the timing with the Jam was not great."
+                    "text": "As it turns out, I have some family coming over this week-end.\nSo the timing with the Jam was not great.\nDo you want to hear about my family?"
+                }
+            ],
+            "buttons": {
+                "y": {
+                    "text": "OK",
+                    "action": "NextPage"
+                },
+                "n": {
+                    "text": "Nah...",
+                    "action": {
+                        "JumpToPage": "family_no"
+                    }
+                }
+            }
+        },
+        {
+            "name": "family1",
+            "lines": [
+                {
+                    "text": "Family",
+                    "size": 50.0
+                },
+                {
+                    "text": "Yes, visiting family.\nIt's been tough for everyone the past few years,\nso we're happy to see each other when we can."
                 }
             ]
+        },
+        {
+            "name": "family2",
+            "lines": [
+                {
+                    "text": "Family",
+                    "size": 50.0
+                },
+                {
+                    "text": "Actually, that's kind of personal...\nAnyway, where was I?"
+                }
+            ],
+            "buttons": {
+                "space": {
+                    "text": "Continue",
+                    "action": {
+                        "JumpToPage": "jam1"
+                    }
+                }
+            }
+        },
+        {
+            "name": "family_no",
+            "lines": [
+                {
+                    "text": "Family",
+                    "size": 50.0
+                },
+                {
+                    "text": "Alright then. Back on topic."
+                }
+            ]
+        },
+        {
+            "name": "jam1",
+            "lines": [
+                {
+                    "text": "Jam",
+                    "size": 50.0
+                },
+                {
+                    "text": "So the LDJam. Pretty cool, right?"
+                }
+            ],
+            "buttons": {
+                "space": {
+                    "text": "Continue",
+                    "action": {
+                        "JumpToPage": "end"
+                    }
+                }
+            }
         },
         {
             "name": "end",
@@ -70,7 +146,7 @@
                     "size": 50.0
                 },
                 {
-                    "text": "...this story has come to an end."
+                    "text": "...this story has come to an end!"
                 }
             ]
         },
