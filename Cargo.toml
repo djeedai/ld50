@@ -7,10 +7,28 @@ description = "LD50"
 keywords = ["game", "gamedev", "bevy"]
 license = "MIT OR Apache-2.0"
 
+[features]
+default = [
+  "native",
+]
+shared = [
+  "bevy/bevy_gltf",
+  "bevy/bevy_winit",
+  "bevy/render",
+  "bevy/png",
+]
+native = [
+  "shared",
+  "bevy_kira_audio/mp3",
+]
+web = [
+  "shared",
+  "chrono/wasmbind",
+]
+
 [dependencies]
-bevy = { version = "0.6", features= ["bevy_gltf", "bevy_winit", "render", "png"] }
-bevy_kira_audio = { version = "0.8", features = ["mp3"] }
-#bevy_prototype_debug_lines = "0.3"
+bevy = { version = "0.6", default-features = false }
+bevy_kira_audio = "0.8"
 bevy-inspector-egui = "0.9"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -18,3 +36,7 @@ anyhow = "1.0.4"
 parking_lot = "0.11"
 bevy_tweening = "0.3"
 chrono = "0.4"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2.79"
+console_error_panic_hook = "0.1"
